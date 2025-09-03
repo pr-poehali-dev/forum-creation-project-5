@@ -4,6 +4,10 @@ import Icon from '@/components/ui/icon'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 
 interface ForumPost {
   id: string
@@ -121,6 +125,14 @@ const Index = () => {
     'Новый ответ в теме "Обсуждаем платформу"',
     'Упомянули вас в сообщении'
   ])
+  const [posts, setPosts] = useState(mockPosts)
+  const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null)
+  const [showNewTopicDialog, setShowNewTopicDialog] = useState(false)
+  const [showReplyDialog, setShowReplyDialog] = useState(false)
+  const [newTopicTitle, setNewTopicTitle] = useState('')
+  const [newTopicContent, setNewTopicContent] = useState('')
+  const [replyContent, setReplyContent] = useState('')
+  const [userName, setUserName] = useState('')
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-forum-light to-white">
@@ -208,7 +220,7 @@ const Index = () => {
                   <h3 className="text-lg font-semibold text-forum-blue">Активные обсуждения</h3>
                 </div>
                 <p className="text-gray-600 mb-4">Присоединяйтесь к горячим дискуссиям</p>
-                <div className="text-2xl font-bold text-forum-orange">{mockPosts.length}</div>
+                <div className="text-2xl font-bold text-forum-orange">{posts.length}</div>
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-forum-turquoise">
@@ -237,14 +249,86 @@ const Index = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-3xl font-bold text-forum-blue">Обсуждения</h2>
-              <Button className="bg-forum-orange hover:bg-forum-orange/90">
-                <Icon name="Plus" size={16} className="mr-2" />
-                Новая тема
-              </Button>
+              
+              <Dialog open={showNewTopicDialog} onOpenChange={setShowNewTopicDialog}>
+                <DialogTrigger asChild>
+                  <Button className="bg-forum-orange hover:bg-forum-orange/90">
+                    <Icon name="Plus" size={16} className="mr-2" />
+                    Новая тема
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-forum-blue">Создать новую тему</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="username">Ваше имя</Label>
+                      <Input
+                        id="username"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        placeholder="Введите ваше имя"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="title">Заголовок темы</Label>
+                      <Input
+                        id="title"
+                        value={newTopicTitle}
+                        onChange={(e) => setNewTopicTitle(e.target.value)}
+                        placeholder="О чём хотите поговорить?"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="content">Сообщение</Label>
+                      <Textarea
+                        id="content"
+                        value={newTopicContent}
+                        onChange={(e) => setNewTopicContent(e.target.value)}
+                        placeholder="Напишите ваше сообщение..."
+                        className="mt-1 min-h-32"
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setShowNewTopicDialog(false)}>
+                        Отмена
+                      </Button>
+                      <Button
+                        className="bg-forum-orange hover:bg-forum-orange/90"
+                        onClick={() => {
+                          if (newTopicTitle && newTopicContent && userName) {
+                            const newPost: ForumPost = {
+                              id: String(posts.length + 1),
+                              title: newTopicTitle,
+                              author: userName,
+                              avatar: '',
+                              replies: 0,
+                              views: 1,
+                              lastActivity: 'только что',
+                              tags: ['новое']
+                            }
+                            setPosts([newPost, ...posts])
+                            setNewTopicTitle('')
+                            setNewTopicContent('')
+                            setShowNewTopicDialog(false)
+                            setNotifications([...notifications, `Новая тема "${newTopicTitle}" создана`])
+                          }
+                        }}
+                        disabled={!newTopicTitle || !newTopicContent || !userName}
+                      >
+                        Создать тему
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="space-y-4">
-              {mockPosts.map((post) => (
+              {posts.map((post) => (
                 <div key={post.id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -262,7 +346,10 @@ const Index = () => {
                         ))}
                       </div>
                       
-                      <h3 className="text-xl font-semibold text-forum-blue hover:text-forum-orange cursor-pointer mb-2">
+                      <h3 
+                        className="text-xl font-semibold text-forum-blue hover:text-forum-orange cursor-pointer mb-2"
+                        onClick={() => setSelectedPost(post)}
+                      >
                         {post.title}
                       </h3>
                       
@@ -287,12 +374,86 @@ const Index = () => {
                           <Icon name="Clock" size={14} />
                           <span>{post.lastActivity}</span>
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedPost(post)
+                            setShowReplyDialog(true)
+                          }}
+                          className="ml-4"
+                        >
+                          <Icon name="Reply" size={14} className="mr-1" />
+                          Ответить
+                        </Button>
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+            
+            {/* Reply Dialog */}
+            <Dialog open={showReplyDialog} onOpenChange={setShowReplyDialog}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-forum-blue">
+                    Ответить на: {selectedPost?.title}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="reply-username">Ваше имя</Label>
+                    <Input
+                      id="reply-username"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      placeholder="Введите ваше имя"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="reply-content">Ваш ответ</Label>
+                    <Textarea
+                      id="reply-content"
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      placeholder="Напишите ваш ответ..."
+                      className="mt-1 min-h-32"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setShowReplyDialog(false)}>
+                      Отмена
+                    </Button>
+                    <Button
+                      className="bg-forum-turquoise hover:bg-forum-turquoise/90"
+                      onClick={() => {
+                        if (replyContent && userName && selectedPost) {
+                          const updatedPosts = posts.map(p => {
+                            if (p.id === selectedPost.id) {
+                              return {
+                                ...p,
+                                replies: p.replies + 1,
+                                lastActivity: 'только что'
+                              }
+                            }
+                            return p
+                          })
+                          setPosts(updatedPosts)
+                          setReplyContent('')
+                          setShowReplyDialog(false)
+                          setNotifications([...notifications, `Новый ответ в теме "${selectedPost.title}"`])
+                        }
+                      }}
+                      disabled={!replyContent || !userName}
+                    >
+                      Отправить ответ
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
