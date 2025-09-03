@@ -61,7 +61,12 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				'forum-orange': '#FF6B35',
+				'forum-turquoise': '#4ECDC1',
+				'forum-blue': '#2C3E50',
+				'forum-gray': '#4ECDC4',
+				'forum-light': '#F8F9FA'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
